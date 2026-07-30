@@ -1,0 +1,23 @@
+# IDE
+/.idea/
+/.vscode/
+
+# Граф кода (локальный индекс)
+/.codegraph/
+
+# Собранные transport-пакеты (артефакты сборки)
+/core/packages/
+
+# Инструменты разработки в корне репозитория: в пакет не едут.
+# ⚠️ core/components/mxapi/vendor/ НЕ игнорируется: рантайм-зависимости
+# (nikic/fast-route) обязаны ехать в transport вместе с пакетом.
+/vendor/
+/composer.lock
+/.phpunit.result.cache
+
+# Проектная конфигурация конкретного сайта — не наша
+/core/config/mxapi.php
+
+# Локальный мусор
+*.log
+.DS_Store

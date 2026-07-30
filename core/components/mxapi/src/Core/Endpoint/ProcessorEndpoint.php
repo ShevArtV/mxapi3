@@ -1,0 +1,183 @@
+<?php
+
+namespace MxApi\Core\Endpoint;
+
+use MxApi\Core\Http\ApiException;
+use MxApi\Core\Http\Request;
+use MxApi\Core\Http\Response;
+use MxApi\Core\Platform\ProcessorResult;
+
+/**
+ * Эндпоинт поверх процессора платформы.
+ *
+ * Так строится большинство эндпоинтов: и провайдер MODX-ядра, и msOrderBridge.
+ * Процессоры уже умеют проверять права, валидировать поля и бросать события —
+ * дублировать это прямыми записями в базу нельзя, иначе мимо проходят и права,
+ * и события, и инвалидация кэша.
+ *
+ * Входные данные жёстко ограничены декларацией параметров: в процессор уходит
+ * только то, что эндпоинт объявил, плюс фиксированные свойства из описания.
+ * Клиент не может дослать произвольное свойство и изменить поведение процессора.
+ */
+abstract class ProcessorEndpoint extends AbstractEndpoint
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function handle(Request $request, EndpointContext $context)
+    {
+        $metadata = $this->getMetadata();
+
+        $processor = (string)$metadata->getExtra('processor', '');
+        if ($processor === '') {
+            throw ApiException::internalError('Эндпоинт не объявил процессор.');
+        }
+
+        $properties = $this->buildProperties($request, $context);
+        $options = [];
+        $processorsPath = $metadata->getExtra('processors_path', '');
+        if ($processorsPath !== '') {
+            $options['processors_path'] = $processorsPath;
+        }
+
+        $this->beforeRun($properties, $context);
+
+        $result = $context->getPlatform()->runProcessor($processor, $properties, $options);
+
+        if (!$result->isSuccess()) {
+            throw new ApiException(
+                'processor_error',
+                $result->getMessage(),
+                400,
+                ['errors' => $result->getErrors()]
+            );
+        }
+
+        $payload = $this->transformPayload($result->getPayload(), $context);
+        if ($payload !== $result->getPayload()) {
+            $result = new ProcessorResult(true, $payload, $result->getMessage(), $result->getErrors());
+        }
+
+        return $this->formatResult($result, $properties);
+    }
+
+    /**
+     * Подготовка окружения процессора: загрузка лексиконов, рантайм-настройки,
+     * доп. свойства. Вызывается после сборки свойств, до запуска процессора.
+     *
+     * Нужна провайдерам: например, процессоры miniShop2 строят подписи кнопок из
+     * лексиконов, которые в API-режиме никто не загрузил, а состав колонок грида
+     * задаётся системной настройкой. Без этого хука провайдеру пришлось бы
+     * копировать весь handle().
+     *
+     * @param array $properties Свойства процессора; можно менять.
+     * @param EndpointContext $context
+     * @return void
+     */
+    protected function beforeRun(array &$properties, EndpointContext $context)
+    {
+    }
+
+    /**
+     * Постобработка тела ответа процессора до сборки конверта API.
+     *
+     * Здесь живёт доменная нормализация провайдера (например резолв полей
+     * связанных сущностей в строки заказа) — ядру такие правила знать нельзя.
+     *
+     * @param array $payload
+     * @param EndpointContext $context
+     * @return array
+     */
+    protected function transformPayload(array $payload, EndpointContext $context)
+    {
+        return $payload;
+    }
+
+    /**
+     * Свойства для процессора: объявленные параметры (с переименованием по
+     * field_map) плюс фиксированные значения из описания.
+     *
+     * @param Request $request
+     * @param EndpointContext $context
+     * @return array
+     * @throws ApiException
+     */
+    protected function buildProperties(Request $request, EndpointContext $context)
+    {
+        $metadata = $this->getMetadata();
+        $params = $this->readParams($request);
+
+        if ($this->hasPagingParameter()) {
+            list($limit, $offset) = $this->readPaging($params, $context->getConfig());
+            $params['limit'] = $limit;
+            // Процессоры MODX ждут смещение в start, а публичный контракт —
+            // offset: переименование здесь, чтобы эндпоинты об этом не помнили.
+            $params['start'] = $offset;
+            unset($params['offset']);
+        }
+
+        $map = $metadata->getExtra('field_map', []);
+        $map = is_array($map) ? $map : [];
+
+        $properties = [];
+        foreach ($params as $name => $value) {
+            $properties[isset($map[$name]) ? $map[$name] : $name] = $value;
+        }
+
+        $static = $metadata->getExtra('properties', []);
+        $static = is_array($static) ? $static : [];
+
+        // Фиксированные свойства идут последними: клиент не должен их перебить.
+        return array_merge($properties, $static);
+    }
+
+    /**
+     * @param ProcessorResult $result
+     * @param array $properties
+     * @return Response
+     */
+    protected function formatResult(ProcessorResult $result, array $properties)
+    {
+        if ($result->isList()) {
+            $meta = [
+                'total' => $result->getTotal(),
+                'limit' => isset($properties['limit']) ? (int)$properties['limit'] : null,
+                'offset' => isset($properties['start']) ? (int)$properties['start'] : 0,
+            ];
+
+            return Response::success($result->getResults(), array_merge($meta, $this->extraMeta($result->getPayload())));
+        }
+
+        return Response::success($result->getData());
+    }
+
+    /**
+     * Дополнительные поля meta для списочного ответа.
+     *
+     * Списочные процессоры иногда отдают рядом с results агрегаты по всей
+     * выборке (miniShop2 — суммы и количество заказов за период). В data им не
+     * место, а терять их нельзя: интерфейс, который их показывает, без них
+     * ломается. Провайдер объявляет такие поля здесь.
+     *
+     * @param array $payload Полное тело ответа процессора.
+     * @return array
+     */
+    protected function extraMeta(array $payload)
+    {
+        return [];
+    }
+
+    /**
+     * @return bool
+     */
+    private function hasPagingParameter()
+    {
+        foreach ($this->getMetadata()->getParameters() as $parameter) {
+            if ($parameter->getName() === 'limit') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

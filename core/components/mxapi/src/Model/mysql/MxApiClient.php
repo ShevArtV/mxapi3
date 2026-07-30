@@ -1,0 +1,205 @@
+<?php
+namespace MxApi\Model\mysql;
+
+use xPDO\xPDO;
+
+class MxApiClient extends \MxApi\Model\MxApiClient
+{
+
+    public static $metaMap = array (
+        'package' => 'MxApi\\Model',
+        'version' => '3.0',
+        'table' => 'mxapi_client',
+        'extends' => 'xPDO\\Om\\xPDOSimpleObject',
+        'tableMeta' => 
+        array (
+            'engine' => 'InnoDB',
+        ),
+        'fields' => 
+        array (
+            'name' => '',
+            'client_key' => '',
+            'secret_hash' => '',
+            'user_id' => 0,
+            'scopes' => NULL,
+            'allowed_ips' => NULL,
+            'contexts' => NULL,
+            'rate_limit' => 0,
+            'token_ttl' => 0,
+            'active' => 1,
+            'description' => NULL,
+            'createdon' => 0,
+            'editedon' => 0,
+        ),
+        'fieldMeta' => 
+        array (
+            'name' => 
+            array (
+                'dbtype' => 'varchar',
+                'precision' => '191',
+                'phptype' => 'string',
+                'null' => false,
+                'default' => '',
+            ),
+            'client_key' => 
+            array (
+                'dbtype' => 'varchar',
+                'precision' => '100',
+                'phptype' => 'string',
+                'null' => false,
+                'default' => '',
+                'index' => 'unique',
+            ),
+            'secret_hash' => 
+            array (
+                'dbtype' => 'varchar',
+                'precision' => '255',
+                'phptype' => 'string',
+                'null' => false,
+                'default' => '',
+            ),
+            'user_id' => 
+            array (
+                'dbtype' => 'integer',
+                'precision' => '11',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 0,
+                'index' => 'index',
+            ),
+            'scopes' => 
+            array (
+                'dbtype' => 'text',
+                'phptype' => 'json',
+                'null' => true,
+            ),
+            'allowed_ips' => 
+            array (
+                'dbtype' => 'text',
+                'phptype' => 'string',
+                'null' => true,
+            ),
+            'contexts' => 
+            array (
+                'dbtype' => 'text',
+                'phptype' => 'json',
+                'null' => true,
+            ),
+            'rate_limit' => 
+            array (
+                'dbtype' => 'integer',
+                'precision' => '11',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 0,
+            ),
+            'token_ttl' => 
+            array (
+                'dbtype' => 'integer',
+                'precision' => '11',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 0,
+            ),
+            'active' => 
+            array (
+                'dbtype' => 'tinyint',
+                'precision' => '1',
+                'attributes' => 'unsigned',
+                'phptype' => 'boolean',
+                'null' => false,
+                'default' => 1,
+                'index' => 'index',
+            ),
+            'description' => 
+            array (
+                'dbtype' => 'text',
+                'phptype' => 'string',
+                'null' => true,
+            ),
+            'createdon' => 
+            array (
+                'dbtype' => 'integer',
+                'precision' => '20',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 0,
+            ),
+            'editedon' => 
+            array (
+                'dbtype' => 'integer',
+                'precision' => '20',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 0,
+            ),
+        ),
+        'indexes' => 
+        array (
+            'client_key' => 
+            array (
+                'alias' => 'client_key',
+                'primary' => false,
+                'unique' => true,
+                'type' => 'BTREE',
+                'columns' => 
+                array (
+                    'client_key' => 
+                    array (
+                        'length' => '',
+                        'collation' => 'A',
+                        'null' => false,
+                    ),
+                ),
+            ),
+            'user_id' => 
+            array (
+                'alias' => 'user_id',
+                'primary' => false,
+                'unique' => false,
+                'type' => 'BTREE',
+                'columns' => 
+                array (
+                    'user_id' => 
+                    array (
+                        'length' => '',
+                        'collation' => 'A',
+                        'null' => false,
+                    ),
+                ),
+            ),
+            'active' => 
+            array (
+                'alias' => 'active',
+                'primary' => false,
+                'unique' => false,
+                'type' => 'BTREE',
+                'columns' => 
+                array (
+                    'active' => 
+                    array (
+                        'length' => '',
+                        'collation' => 'A',
+                        'null' => false,
+                    ),
+                ),
+            ),
+        ),
+        'composites' => 
+        array (
+            'Tokens' => 
+            array (
+                'class' => 'MxApi\\Model\\MxApiToken',
+                'local' => 'id',
+                'foreign' => 'client_id',
+                'cardinality' => 'many',
+                'owner' => 'local',
+            ),
+        ),
+    );
+
+}

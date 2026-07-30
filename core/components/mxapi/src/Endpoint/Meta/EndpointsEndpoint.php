@@ -1,0 +1,64 @@
+<?php
+
+namespace MxApi\Endpoint\Meta;
+
+use MxApi\Core\Endpoint\AbstractEndpoint;
+use MxApi\Core\Endpoint\EndpointContext;
+use MxApi\Core\Http\Request;
+use MxApi\Core\Http\Response;
+use MxApi\Core\Registry\CatalogFilter;
+use MxApi\Core\Registry\EndpointRegistry;
+
+/**
+ * Каталог эндпоинтов: то же, что показывает CMP, но машиночитаемо.
+ *
+ * Отдаёт только публичные эндпоинты — служебные (context = internal) во внешний
+ * каталог не попадают, иначе интегратор примет их за часть контракта.
+ */
+class EndpointsEndpoint extends AbstractEndpoint
+{
+    /** @var EndpointRegistry */
+    private $registry;
+
+    public function __construct(EndpointRegistry $registry)
+    {
+        $this->registry = $registry;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function describe()
+    {
+        return [
+            'id' => 'meta.endpoints',
+            'title' => 'Каталог эндпоинтов',
+            'description' => 'Список доступных эндпоинтов с параметрами, scope и правами.',
+            'path' => '/meta/endpoints',
+            'methods' => ['GET'],
+            'scope' => 'meta.read',
+            'permission' => 'mxapi_meta_read',
+            'response_description' => 'Массив описаний эндпоинтов.',
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function handle(Request $request, EndpointContext $context)
+    {
+        $items = [];
+        foreach (CatalogFilter::apply($this->registry, $context)->all() as $endpoint) {
+            // Публичное представление: без имён процессоров и маппинга полей.
+            $items[] = $endpoint->getMetadata()->toPublicArray();
+        }
+
+        return Response::success($items, [
+            'count' => count($items),
+            'route_prefix' => $context->getConfig()->get('route_prefix'),
+            // Чтобы по короткому каталогу было понятно, что он урезан режимом,
+            // а не что эндпоинтов на сайте нет.
+            'filter' => $context->getConfig()->get('catalog_filter'),
+        ]);
+    }
+}
