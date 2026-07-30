@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Button, Dialog, Message, useToast } from 'primevue';
 import { t } from '../utils/i18n.js';
 
@@ -15,6 +15,7 @@ const emit = defineEmits(['close']);
 
 const toast = useToast();
 const visible = computed(() => !!props.data);
+const copied = ref(false);
 
 async function copy() {
   const text = props.data.client_secret;
@@ -23,7 +24,7 @@ async function copy() {
   // менеджер часто открыт по http на стенде — поэтому fallback через поле.
   if (navigator.clipboard && window.isSecureContext) {
     await navigator.clipboard.writeText(text);
-    toast.add({ severity: 'success', summary: t('mxapi_client_secret_copied'), life: 2000 });
+    done();
     return;
   }
 
@@ -35,11 +36,21 @@ async function copy() {
   area.select();
   try {
     document.execCommand('copy');
-    toast.add({ severity: 'success', summary: t('mxapi_client_secret_copied'), life: 2000 });
+    done();
   } catch (e) {
     // Копировать нечем — секрет всё равно на экране, выделяется руками.
   }
   document.body.removeChild(area);
+}
+
+function done() {
+  copied.value = true;
+  toast.add({ severity: 'success', summary: t('mxapi_client_secret_copied'), life: 2000 });
+}
+
+function close() {
+  copied.value = false;
+  emit('close');
 }
 </script>
 
@@ -49,54 +60,58 @@ async function copy() {
     modal
     :header="t('mxapi_client_secret_title')"
     :style="{ width: '38rem' }"
-    class="vueApp"
-    @update:visible="emit('close')"
+    :breakpoints="{ '40rem': '95vw' }"
+    class="vueApp mxapi-app"
+    @update:visible="close"
   >
-    <Message severity="warn" :closable="false" class="mxapi-mb">
+    <Message severity="warn" :closable="false" class="mxapi-block">
       {{ t('mxapi_client_secret_warning') }}
     </Message>
 
-    <p class="mxapi-label">client_id</p>
-    <div class="mxapi-value">{{ data?.client_key }}</div>
+    <p class="mxapi-label" id="mxapi-secret-key-label">client_id</p>
+    <div class="mxapi-value" aria-labelledby="mxapi-secret-key-label">{{ data?.client_key }}</div>
 
-    <p class="mxapi-label">client_secret</p>
-    <div class="mxapi-value">{{ data?.client_secret }}</div>
+    <p class="mxapi-label" id="mxapi-secret-value-label">client_secret</p>
+    <div class="mxapi-value" aria-labelledby="mxapi-secret-value-label">{{ data?.client_secret }}</div>
 
-    <Message
-      v-if="data?.revoked_tokens"
-      severity="info"
-      :closable="false"
-      class="mxapi-mt"
-    >
+    <Message v-if="data?.revoked_tokens" severity="info" :closable="false" class="mxapi-mt">
       {{ t('mxapi_client_tokens_revoked', { count: data.revoked_tokens }) }}
     </Message>
 
     <template #footer>
-      <Button :label="t('mxapi_client_secret_copy')" icon="pi pi-copy" @click="copy" />
-      <Button :label="t('mxapi_close')" severity="secondary" text @click="emit('close')" />
+      <Button
+        :label="copied ? t('mxapi_client_secret_copied') : t('mxapi_client_secret_copy')"
+        :icon="copied ? 'pi pi-check' : 'pi pi-copy'"
+        @click="copy"
+      />
+      <Button :label="t('mxapi_close')" severity="secondary" text @click="close" />
     </template>
   </Dialog>
 </template>
 
 <style scoped>
 .mxapi-label {
-  margin: 0.75rem 0 0.25rem;
+  margin: 0.85rem 0 0.25rem;
   font-weight: 600;
 }
 
 .mxapi-value {
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-family: monospace;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--p-content-border-radius, 6px);
+  background: var(--p-surface-100);
+  color: var(--p-text-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   word-break: break-all;
-  background: var(--p-content-hover-background, rgba(0, 0, 0, 0.05));
+  /* Один клик выделяет значение целиком: секрет часто уносят руками, когда
+     буфер обмена недоступен (менеджер по http). */
+  user-select: all;
 }
 
-.mxapi-mb {
+.mxapi-block {
   margin-bottom: 0.5rem;
 }
 
 .mxapi-mt {
-  margin-top: 0.75rem;
+  margin-top: 0.85rem;
 }
 </style>

@@ -1,11 +1,15 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { Button, useToast } from 'primevue';
 import { t } from '../utils/i18n.js';
 
 const props = defineProps({
   endpoint: { type: Object, required: true },
   baseUrl: { type: String, default: '' },
 });
+
+const toast = useToast();
+const copied = ref(false);
 
 /**
  * Контекст, в котором выполняется эндпоинт. Права процессоров принадлежат
@@ -62,6 +66,36 @@ const curl = computed(() => {
   }
   return command;
 });
+
+// Пример вызова существует, чтобы его унести в терминал, поэтому копирование
+// стоит рядом с ним, а не в общей панели действий.
+async function copyCurl() {
+  const text = curl.value;
+
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+  } else {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    try {
+      document.execCommand('copy');
+    } catch (e) {
+      document.body.removeChild(area);
+      return;
+    }
+    document.body.removeChild(area);
+  }
+
+  copied.value = true;
+  toast.add({ severity: 'success', summary: t('mxapi_curl_copied'), life: 2000 });
+  setTimeout(() => {
+    copied.value = false;
+  }, 2000);
+}
 </script>
 
 <template>
@@ -71,7 +105,7 @@ const curl = computed(() => {
     <table class="mxapi-meta">
       <tbody>
         <tr v-for="row in rows" :key="row.label">
-          <th>{{ row.label }}</th>
+          <th scope="row">{{ row.label }}</th>
           <td>
             <code v-if="row.code">{{ row.value }}</code>
             <span v-else>{{ row.value }}</span>
@@ -83,15 +117,17 @@ const curl = computed(() => {
     <p v-if="!endpoint.parameters || !endpoint.parameters.length" class="mxapi-muted">
       {{ t('mxapi_param_none') }}
     </p>
+    <!-- Таблица параметров шире колонки: прокручивается внутри себя, страница
+         менеджера по горизонтали не едет. -->
     <div v-else class="mxapi-table-scroll">
       <table class="mxapi-params">
         <thead>
           <tr>
-            <th>{{ t('mxapi_param_name') }}</th>
-            <th>{{ t('mxapi_param_type') }}</th>
-            <th>{{ t('mxapi_param_in') }}</th>
-            <th>{{ t('mxapi_param_required') }}</th>
-            <th>{{ t('mxapi_param_description') }}</th>
+            <th scope="col">{{ t('mxapi_param_name') }}</th>
+            <th scope="col">{{ t('mxapi_param_type') }}</th>
+            <th scope="col">{{ t('mxapi_param_in') }}</th>
+            <th scope="col">{{ t('mxapi_param_required') }}</th>
+            <th scope="col">{{ t('mxapi_param_description') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -117,7 +153,18 @@ const curl = computed(() => {
       </table>
     </div>
 
-    <pre class="mxapi-curl">{{ curl }}</pre>
+    <div class="mxapi-curl">
+      <pre class="mxapi-pre">{{ curl }}</pre>
+      <Button
+        :icon="copied ? 'pi pi-check' : 'pi pi-copy'"
+        :aria-label="t('mxapi_curl_copy')"
+        :title="t('mxapi_curl_copy')"
+        severity="secondary"
+        text
+        class="mxapi-curl-copy"
+        @click="copyCurl"
+      />
+    </div>
   </div>
 </template>
 
@@ -128,6 +175,7 @@ const curl = computed(() => {
 
 .mxapi-description {
   margin: 0 0 0.75rem;
+  max-width: 75ch;
 }
 
 .mxapi-meta,
@@ -144,7 +192,7 @@ const curl = computed(() => {
   padding: 0.35rem 0.5rem;
   text-align: left;
   vertical-align: top;
-  border-bottom: 1px solid var(--p-content-border-color, #dee2e6);
+  border-bottom: 1px solid var(--p-content-border-color);
 }
 
 .mxapi-meta th {
@@ -152,22 +200,19 @@ const curl = computed(() => {
   font-weight: 600;
 }
 
-/* Широкая таблица параметров прокручивается внутри себя: страница менеджера
-   не должна ехать по горизонтали. */
 .mxapi-table-scroll {
   overflow-x: auto;
 }
 
+/* Кнопка копирования лежит в углу блока с командой — на своём объекте,
+   а не в общей панели действий. */
 .mxapi-curl {
-  padding: 0.6rem;
-  border-radius: 6px;
-  background: var(--p-content-hover-background, rgba(0, 0, 0, 0.05));
-  overflow-x: auto;
-  white-space: pre;
-  margin: 0;
+  position: relative;
 }
 
-.mxapi-muted {
-  opacity: 0.7;
+.mxapi-curl-copy {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
 }
 </style>

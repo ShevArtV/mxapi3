@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { PrimeVue, Aura, ConfirmationService, ToastService, Tooltip } from 'primevue';
+import './styles/shared.css';
 import UserClients from './pages/UserClients.vue';
 import { t } from './utils/i18n.js';
 
@@ -22,7 +23,11 @@ function mountApp() {
   el.dataset.mxapiMounted = '1';
 
   const app = createApp(UserClients);
-  app.use(PrimeVue, { theme: { preset: Aura } });
+  // ⚠️ darkModeSelector: false — тёмный режим выключен намеренно. По умолчанию
+// Aura следует системной схеме (prefers-color-scheme), и на машине с тёмной
+// системой виджет чернел внутри всегда светлой админки MODX 3.2, которая
+// собственного тёмного режима не имеет.
+app.use(PrimeVue, { theme: { preset: Aura, options: { darkModeSelector: false } } });
   app.use(ConfirmationService);
   app.use(ToastService);
   app.directive('tooltip', Tooltip);

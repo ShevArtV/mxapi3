@@ -164,3 +164,13 @@ $_lang['mxapi_client_active'] = 'включён';
 $_lang['mxapi_client_inactive'] = 'отключён';
 $_lang['mxapi_client_err_load'] = 'Не удалось загрузить список клиентов.';
 $_lang['mxapi_client_tokens_revoked'] = 'Отозвано токенов: [[+count]]';
+
+$_lang['mxapi_catalog_empty_none'] = 'Эндпоинтов пока нет.';
+$_lang['mxapi_catalog_empty_none_hint'] = 'Ядро отдаёт только выпуск токенов и мета-эндпоинты. Остальное поставляют провайдеры: пакет с плагином на событии mxApiOnRegisterEndpoints или ключ providers в core/config/mxapi.php.';
+$_lang['mxapi_catalog_reset_filters'] = 'Сбросить фильтры';
+$_lang['mxapi_curl_copy'] = 'Скопировать пример вызова';
+$_lang['mxapi_curl_copied'] = 'Пример скопирован';
+
+$_lang['mxapi_client_empty_hint'] = 'Клиент — это пара client_id и client_secret, по которой внешняя система получает токен и работает от имени этого пользователя.';
+$_lang['mxapi_client_saved'] = 'Клиент сохранён';
+$_lang['mxapi_client_removed'] = 'Клиент удалён';

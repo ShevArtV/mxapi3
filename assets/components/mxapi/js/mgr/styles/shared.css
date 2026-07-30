@@ -1,0 +1,59 @@
+/*
+ * Общая типографика и утилиты обоих интерфейсов пакета.
+ *
+ * Цвета берутся из токенов PrimeVue (пакет VueTools), а не задаются числами:
+ * приглушённый текст через opacity проваливает контраст, а токен темы всегда
+ * согласован с остальными элементами.
+ *
+ * ⚠️ Своей тёмной схемы здесь нет намеренно: менеджер MODX 3.2 тёмного режима
+ * не поддерживает (ни системной настройки, ни prefers-color-scheme в теме
+ * default), и виджет с собственным «тёмным» видом выбивался бы из админки.
+ * Если тёмный режим появится в ядре, темизацией займётся VueTools — тогда
+ * достаточно передать его селектор в darkModeSelector при инициализации.
+ */
+
+.mxapi-muted {
+  color: var(--p-text-muted-color);
+}
+
+.mxapi-app code,
+.mxapi-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+/* Блок с кодом (curl, секрет): поверхность на тон ниже контента. */
+.mxapi-pre {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--p-content-border-radius, 6px);
+  background: var(--p-surface-100);
+  color: var(--p-text-color);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Скелетон списка: у загрузки должна быть форма будущего контента, иначе
+   страница дёргается в момент появления данных. */
+.mxapi-skeleton {
+  height: 3.25rem;
+  border-radius: var(--p-content-border-radius, 6px);
+  background: var(--p-surface-200);
+  animation: mxapi-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes mxapi-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mxapi-skeleton {
+    animation: none;
+  }
+}

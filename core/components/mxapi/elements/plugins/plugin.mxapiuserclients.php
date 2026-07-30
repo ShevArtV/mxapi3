@@ -62,7 +62,7 @@ $modx->regClientStartupHTMLBlock(
     . ';</script>'
 );
 
-\MxApi\Manager\Assets::registerLexicon($modx, 'mxapi_');
+\MxApi\Manager\Assets::registerLexicon($modx);
 \MxApi\Manager\Assets::registerVueToolsCheck($modx);
 \MxApi\Manager\Assets::registerModule($modx, $assetsPath, $assetsUrl, 'clients');
 

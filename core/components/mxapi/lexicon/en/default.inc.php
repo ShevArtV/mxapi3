@@ -159,3 +159,13 @@ $_lang['mxapi_client_active'] = 'enabled';
 $_lang['mxapi_client_inactive'] = 'disabled';
 $_lang['mxapi_client_err_load'] = 'Could not load the client list.';
 $_lang['mxapi_client_tokens_revoked'] = 'Tokens revoked: [[+count]]';
+
+$_lang['mxapi_catalog_empty_none'] = 'No endpoints yet.';
+$_lang['mxapi_catalog_empty_none_hint'] = 'The core ships token issuing and meta endpoints only. Everything else comes from providers: a package plugin on the mxApiOnRegisterEndpoints event, or the providers key in core/config/mxapi.php.';
+$_lang['mxapi_catalog_reset_filters'] = 'Reset filters';
+$_lang['mxapi_curl_copy'] = 'Copy the example call';
+$_lang['mxapi_curl_copied'] = 'Example copied';
+
+$_lang['mxapi_client_empty_hint'] = 'A client is a client_id / client_secret pair an external system uses to get a token and act as this user.';
+$_lang['mxapi_client_saved'] = 'Client saved';
+$_lang['mxapi_client_removed'] = 'Client removed';

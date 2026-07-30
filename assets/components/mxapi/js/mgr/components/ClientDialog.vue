@@ -16,6 +16,7 @@ const emit = defineEmits(['update:visible', 'saved']);
 const TTL_SITE = 0;
 const TTL_NEVER = -1;
 const TTL_CUSTOM = 'custom';
+const TTL_MIN = 60;
 
 const name = ref('');
 const ttlMode = ref(TTL_SITE);
@@ -27,6 +28,7 @@ const totalExisting = ref(0);
 const error = ref('');
 const saving = ref(false);
 const loadingScopes = ref(false);
+const touched = ref(false);
 
 const isEdit = computed(() => !!props.client);
 
@@ -43,6 +45,18 @@ const emptyMessage = computed(() => {
   if (totalScopes.value === 0) return t('mxapi_client_scopes_none_allowed');
   return '';
 });
+
+const ttlInvalid = computed(() => {
+  if (ttlMode.value !== TTL_CUSTOM) return false;
+  const value = parseInt(ttlSeconds.value, 10);
+  return !Number.isFinite(value) || value < TTL_MIN;
+});
+
+// Кнопка «Сохранить» гаснет ровно на тех условиях, которые отвергнет сервер:
+// проверка на клиенте не заменяет серверную, а избавляет от лишнего рейса.
+const canSave = computed(
+  () => name.value.trim() !== '' && selected.value.length > 0 && !ttlInvalid.value
+);
 
 async function loadScopes() {
   loadingScopes.value = true;
@@ -61,6 +75,7 @@ async function loadScopes() {
 
 function reset() {
   error.value = '';
+  touched.value = false;
   if (props.client) {
     name.value = props.client.name || '';
     selected.value = [...(props.client.scopes || [])];
@@ -117,10 +132,13 @@ function ttlValue() {
 }
 
 async function save() {
+  touched.value = true;
+  if (!canSave.value) return;
+
   error.value = '';
   saving.value = true;
   try {
-    const payload = { name: name.value, scopes: selected.value, token_ttl: ttlValue() };
+    const payload = { name: name.value.trim(), scopes: selected.value, token_ttl: ttlValue() };
     const res = isEdit.value
       ? await ClientApi.update(props.userId, props.client.id, payload)
       : await ClientApi.create(props.userId, payload);
@@ -139,38 +157,60 @@ async function save() {
     modal
     :header="isEdit ? t('mxapi_client_window_update') : t('mxapi_client_window_create')"
     :style="{ width: '46rem' }"
-    class="vueApp"
+    :breakpoints="{ '48rem': '95vw' }"
+    class="vueApp mxapi-app"
     @update:visible="emit('update:visible', $event)"
   >
-    <Message v-if="error" severity="error" :closable="false" class="mxapi-mb">{{ error }}</Message>
+    <Message v-if="error" severity="error" :closable="false" class="mxapi-block">{{ error }}</Message>
 
     <div class="mxapi-field">
-      <label for="mxapi-client-name">{{ t('mxapi_client_name') }}</label>
-      <InputText id="mxapi-client-name" v-model="name" class="mxapi-w-full" />
+      <label for="mxapi-client-name">{{ t('mxapi_client_name') }} <span aria-hidden="true">*</span></label>
+      <InputText
+        id="mxapi-client-name"
+        v-model="name"
+        class="mxapi-w-full"
+        :invalid="touched && name.trim() === ''"
+        required
+        @blur="touched = true"
+      />
+      <small v-if="touched && name.trim() === ''" class="mxapi-error-text">
+        {{ t('mxapi_client_err_name_ns') }}
+      </small>
     </div>
 
     <div class="mxapi-field">
-      <label>{{ t('mxapi_client_ttl') }}</label>
+      <label for="mxapi-client-ttl">{{ t('mxapi_client_ttl') }}</label>
       <div class="mxapi-ttl">
-        <Select v-model="ttlMode" :options="ttlOptions" option-label="label" option-value="value" />
+        <Select
+          id="mxapi-client-ttl"
+          v-model="ttlMode"
+          :options="ttlOptions"
+          option-label="label"
+          option-value="value"
+        />
         <InputText
           v-if="ttlMode === 'custom'"
           v-model="ttlSeconds"
           class="mxapi-ttl-input"
+          inputmode="numeric"
+          :invalid="ttlInvalid"
           :aria-label="t('mxapi_client_ttl_seconds')"
         />
         <span v-if="ttlMode === 'custom'" class="mxapi-muted">{{ t('mxapi_client_ttl_sec_short') }}</span>
       </div>
+      <small v-if="ttlInvalid" class="mxapi-error-text">{{ t('mxapi_client_err_ttl') }}</small>
       <Message v-if="ttlMode === -1" severity="warn" :closable="false" class="mxapi-mt">
         {{ t('mxapi_client_ttl_never_warning') }}
       </Message>
     </div>
 
-    <div class="mxapi-field">
-      <label>{{ t('mxapi_client_scopes') }}</label>
+    <fieldset class="mxapi-field mxapi-fieldset">
+      <legend>{{ t('mxapi_client_scopes') }} <span aria-hidden="true">*</span></legend>
       <p class="mxapi-muted mxapi-caption">{{ t('mxapi_client_scopes_caption') }}</p>
 
-      <div v-if="loadingScopes" class="mxapi-muted">{{ t('mxapi_catalog_loading') }}</div>
+      <div v-if="loadingScopes" class="mxapi-scopes-loading">
+        <div v-for="n in 3" :key="n" class="mxapi-skeleton mxapi-skeleton-row"></div>
+      </div>
       <Message v-else-if="emptyMessage" severity="warn" :closable="false">{{ emptyMessage }}</Message>
 
       <div v-else class="mxapi-scopes">
@@ -180,9 +220,10 @@ async function save() {
               :model-value="groupState(group).all"
               binary
               :indeterminate="groupState(group).some && !groupState(group).all"
+              :input-id="`group-${group.provider}`"
               @update:model-value="toggleGroup(group)"
             />
-            <strong>{{ group.provider }}</strong>
+            <label :for="`group-${group.provider}`"><strong>{{ group.provider }}</strong></label>
           </div>
 
           <div v-for="row in group.scopes" :key="row.scope" class="mxapi-scope-row">
@@ -190,29 +231,41 @@ async function save() {
             <label :for="`scope-${row.scope}`">
               <code>{{ row.scope }}</code>
               <span v-if="row.permission" class="mxapi-muted"> · {{ row.permission }}</span>
-              <div class="mxapi-muted mxapi-scope-endpoints">{{ row.endpoints_text }}</div>
+              <span class="mxapi-muted mxapi-scope-endpoints">{{ row.endpoints_text }}</span>
             </label>
           </div>
         </div>
       </div>
-    </div>
+
+      <small v-if="touched && !selected.length && !emptyMessage" class="mxapi-error-text">
+        {{ t('mxapi_client_err_scopes_ns') }}
+      </small>
+    </fieldset>
 
     <template #footer>
       <Button :label="t('mxapi_cancel')" severity="secondary" text @click="emit('update:visible', false)" />
-      <Button :label="t('mxapi_save')" :loading="saving" @click="save" />
+      <Button :label="t('mxapi_save')" :loading="saving" :disabled="!canSave" @click="save" />
     </template>
   </Dialog>
 </template>
 
 <style scoped>
 .mxapi-field {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
-.mxapi-field > label {
+.mxapi-field > label,
+.mxapi-fieldset > legend {
   display: block;
   font-weight: 600;
   margin-bottom: 0.35rem;
+  padding: 0;
+}
+
+.mxapi-fieldset {
+  border: 0;
+  margin-inline: 0;
+  padding: 0;
 }
 
 .mxapi-w-full {
@@ -223,6 +276,7 @@ async function save() {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .mxapi-ttl-input {
@@ -231,18 +285,30 @@ async function save() {
 
 .mxapi-caption {
   margin: 0 0 0.5rem;
+  max-width: 70ch;
 }
 
-.mxapi-scopes {
+.mxapi-error-text {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--p-message-error-color, var(--p-red-600));
+}
+
+.mxapi-scopes,
+.mxapi-scopes-loading {
   max-height: 22rem;
   overflow-y: auto;
-  border: 1px solid var(--p-content-border-color, #dee2e6);
-  border-radius: 6px;
-  padding: 0.5rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius, 6px);
+  padding: 0.75rem;
+}
+
+.mxapi-skeleton-row + .mxapi-skeleton-row {
+  margin-top: 0.5rem;
 }
 
 .mxapi-scope-group + .mxapi-scope-group {
-  margin-top: 0.75rem;
+  margin-top: 1rem;
 }
 
 .mxapi-scope-group-head {
@@ -256,18 +322,19 @@ async function save() {
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
-  padding: 0.2rem 0 0.2rem 1.25rem;
+  padding: 0.3rem 0 0.3rem 1.5rem;
+}
+
+.mxapi-scope-row label {
+  cursor: pointer;
 }
 
 .mxapi-scope-endpoints {
+  display: block;
   font-size: 0.85em;
 }
 
-.mxapi-muted {
-  opacity: 0.7;
-}
-
-.mxapi-mb {
+.mxapi-block {
   margin-bottom: 0.75rem;
 }
 

@@ -64,7 +64,7 @@ class MxapiindexManagerController extends modExtraManagerController
         $json = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $this->modx->regClientStartupHTMLBlock("<script>window.MxApiConfig = {$json};</script>");
 
-        \MxApi\Manager\Assets::registerLexicon($this->modx, 'mxapi_');
+        \MxApi\Manager\Assets::registerLexicon($this->modx);
         \MxApi\Manager\Assets::registerVueToolsCheck($this->modx);
         \MxApi\Manager\Assets::registerModule($this->modx, $this->assetsPath, $this->assetsUrl, 'catalog');
     }

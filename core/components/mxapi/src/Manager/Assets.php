@@ -20,11 +20,15 @@ class Assets
      * window.MODx.lang, а его load() не реализован. Поэтому страница обязана
      * прокинуть строки сама, иначе интерфейс покажет сырые ключи.
      *
+     * ⚠️ Префикс без подчёркивания: ключ `mxapi` (название пакета, оно же
+     * заголовок вкладки) при выборке по `mxapi_` не попадал в MODx.lang, и
+     * вкладка подписывалась сырым ключом.
+     *
      * @param modX $modx
      * @param string $prefix
      * @return void
      */
-    public static function registerLexicon(modX $modx, $prefix = 'mxapi_')
+    public static function registerLexicon(modX $modx, $prefix = 'mxapi')
     {
         $modx->lexicon->load('mxapi:default');
         $entries = $modx->lexicon->fetch($prefix);
@@ -104,6 +108,14 @@ JS;
         $distUrl = rtrim($assetsUrl, '/') . '/js/mgr/vue-dist/';
 
         $version = @filemtime($distPath . $name . '.min.js') ?: '0';
+
+        // Общие стили обоих приложений живут в отдельном чанке (Vite выносит их
+        // туда вместе с общим кодом) и подключаются первыми — иначе утилиты
+        // вроде .mxapi-muted просто не приезжают на страницу.
+        if (is_file($distPath . 'shared.min.css')) {
+            $sharedVersion = @filemtime($distPath . 'shared.min.css') ?: $version;
+            $modx->regClientCSS($distUrl . 'shared.min.css?v=' . rawurlencode((string)$sharedVersion));
+        }
 
         if (is_file($distPath . $name . '.min.css')) {
             $cssVersion = @filemtime($distPath . $name . '.min.css') ?: $version;
