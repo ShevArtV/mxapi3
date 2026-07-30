@@ -1,0 +1,95 @@
+<?php
+
+namespace MxApi\Processors\Mgr\Endpoints;
+
+use MODX\Revolution\Processors\Processor;
+use MxApi\Processors\Mgr\KernelFactory;
+
+/**
+ * Каталог эндпоинтов для CMP.
+ *
+ * Источник данных — тот же реестр, что обслуживает боевые запросы, поэтому
+ * админка не может показать эндпоинт, которого на самом деле нет.
+ *
+ * В отличие от публичного /meta/endpoints здесь отдаются и служебные эндпоинты,
+ * и детали реализации (какой процессор дёргается): администратору сайта это
+ * нужно, внешнему клиенту — нет.
+ */
+class GetList extends Processor
+{
+    /** @var string Право менеджера: каталог доступен тем, кто и так видит настройки. */
+    public $permission = 'settings';
+
+    /** @var array */
+    public $languageTopics = ['mxapi:default'];
+
+    /** @var \MxApi\Core\Kernel */
+    private $kernel;
+
+    public function initialize()
+    {
+        if (!$this->modx->hasPermission($this->permission)) {
+            return $this->modx->lexicon('access_denied');
+        }
+
+        $this->kernel = KernelFactory::create($this->modx);
+        if (!$this->kernel) {
+            return $this->modx->lexicon('mxapi_err_no_vendor');
+        }
+
+        return true;
+    }
+
+    public function process()
+    {
+        $query = trim((string)$this->getProperty('query', ''));
+        $provider = trim((string)$this->getProperty('provider', ''));
+
+        $rows = [];
+        foreach ($this->kernel->getRegistry()->all() as $endpoint) {
+            $metadata = $endpoint->getMetadata();
+            $row = $metadata->toArray();
+            $row['methods_text'] = implode(', ', $metadata->getMethods());
+            $row['public'] = $metadata->isPublic();
+            // Читаемый маршрут для списка; шаблон роутера остаётся в path и
+            // показывается в деталях — админу он нужен, но в заголовке шумит.
+            $row['public_path'] = $metadata->getPublicPath();
+
+            if ($provider !== '' && $metadata->getProvider() !== $provider) {
+                continue;
+            }
+
+            if ($query !== '' && !$this->matches($row, $query)) {
+                continue;
+            }
+
+            $rows[] = $row;
+        }
+
+        usort($rows, function ($left, $right) {
+            return strcmp($left['id'], $right['id']);
+        });
+
+        return $this->outputArray($rows, count($rows));
+    }
+
+    /**
+     * @param array $row
+     * @param string $query
+     * @return bool
+     */
+    private function matches(array $row, $query)
+    {
+        $haystack = implode(' ', [
+            $row['id'],
+            $row['title'],
+            $row['description'],
+            $row['path'],
+            $row['scope'],
+            $row['permission'],
+            $row['provider'],
+        ]);
+
+        return mb_stripos($haystack, $query) !== false;
+    }
+}

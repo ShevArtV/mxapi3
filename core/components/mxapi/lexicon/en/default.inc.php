@@ -105,3 +105,57 @@ $_lang['mxapi_client_err_remove'] = 'Could not delete the client.';
 
 $_lang['mxapi_client_actions'] = 'Actions';
 $_lang['mxapi_client_regenerate_short'] = 'Regenerate';
+
+/* Vue-based endpoint catalog UI. Component code carries keys only — the texts
+   live here and are passed to MODx.lang. */
+$_lang['mxapi_vuetools_required'] = 'The mxApi interface requires the VueTools package. Install it via Package Manager.';
+$_lang['mxapi_catalog_loading'] = 'Loading…';
+$_lang['mxapi_catalog_error'] = 'Could not load the endpoint catalog.';
+$_lang['mxapi_catalog_empty'] = 'Nothing found.';
+$_lang['mxapi_catalog_search_ph'] = 'Search by route, scope, permission…';
+$_lang['mxapi_catalog_all_providers'] = 'All providers';
+$_lang['mxapi_catalog_download_openapi'] = 'Download OpenAPI';
+$_lang['mxapi_catalog_base_url'] = 'Base URL:';
+$_lang['mxapi_catalog_count'] = 'endpoints: [[+shown]] of [[+total]]';
+$_lang['mxapi_catalog_disabled'] = 'The API is switched off by mxapi.enabled: every request gets 503.';
+
+$_lang['mxapi_badge_internal'] = 'internal';
+$_lang['mxapi_badge_internal_hint'] = 'Never exposed in the public catalog or OpenAPI.';
+$_lang['mxapi_badge_write'] = 'write';
+$_lang['mxapi_badge_deprecated'] = 'deprecated';
+
+$_lang['mxapi_detail_id'] = 'Identifier';
+$_lang['mxapi_detail_url'] = 'Full URL';
+$_lang['mxapi_detail_scope'] = 'Scope';
+$_lang['mxapi_detail_permission'] = 'MODX permission';
+$_lang['mxapi_detail_auth'] = 'Authentication';
+$_lang['mxapi_detail_context'] = 'MODX context';
+$_lang['mxapi_detail_provider'] = 'Provider';
+$_lang['mxapi_detail_route_template'] = 'Route template';
+$_lang['mxapi_detail_processor'] = 'Processor';
+$_lang['mxapi_detail_not_required'] = 'not required';
+$_lang['mxapi_detail_bearer'] = 'Bearer token';
+$_lang['mxapi_context_request'] = 'from request (X-MxApi-Context)';
+$_lang['mxapi_context_default'] = 'default (mxapi.context)';
+
+$_lang['mxapi_param_none'] = 'No parameters.';
+$_lang['mxapi_param_name'] = 'Parameter';
+$_lang['mxapi_param_type'] = 'Type';
+$_lang['mxapi_param_in'] = 'In';
+$_lang['mxapi_param_required'] = 'Required';
+$_lang['mxapi_param_description'] = 'Description';
+$_lang['mxapi_param_default'] = 'default';
+$_lang['mxapi_param_enum'] = 'values:';
+
+$_lang['mxapi_yes'] = 'yes';
+$_lang['mxapi_no'] = 'no';
+$_lang['mxapi_save'] = 'Save';
+$_lang['mxapi_cancel'] = 'Cancel';
+$_lang['mxapi_close'] = 'Close';
+
+$_lang['mxapi_client_empty'] = 'No integration clients yet.';
+$_lang['mxapi_client_status'] = 'State';
+$_lang['mxapi_client_active'] = 'enabled';
+$_lang['mxapi_client_inactive'] = 'disabled';
+$_lang['mxapi_client_err_load'] = 'Could not load the client list.';
+$_lang['mxapi_client_tokens_revoked'] = 'Tokens revoked: [[+count]]';

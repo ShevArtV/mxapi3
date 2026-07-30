@@ -110,3 +110,57 @@ $_lang['mxapi_client_err_remove'] = 'Не удалось удалить клие
 
 $_lang['mxapi_client_actions'] = 'Действия';
 $_lang['mxapi_client_regenerate_short'] = 'Перевыпустить';
+
+/* Интерфейс каталога эндпоинтов (Vue). Строки в компонентах не хардкодятся —
+   только ключи, тексты живут здесь и прокидываются в MODx.lang. */
+$_lang['mxapi_vuetools_required'] = 'Для работы интерфейса mxApi требуется пакет VueTools. Установите его через «Менеджер пакетов».';
+$_lang['mxapi_catalog_loading'] = 'Загрузка…';
+$_lang['mxapi_catalog_error'] = 'Не удалось загрузить каталог эндпоинтов.';
+$_lang['mxapi_catalog_empty'] = 'Ничего не найдено.';
+$_lang['mxapi_catalog_search_ph'] = 'Поиск по маршруту, scope, праву…';
+$_lang['mxapi_catalog_all_providers'] = 'Все источники';
+$_lang['mxapi_catalog_download_openapi'] = 'Скачать OpenAPI';
+$_lang['mxapi_catalog_base_url'] = 'Базовый адрес:';
+$_lang['mxapi_catalog_count'] = 'эндпоинтов: [[+shown]] из [[+total]]';
+$_lang['mxapi_catalog_disabled'] = 'API выключен настройкой mxapi.enabled: запросы получают 503.';
+
+$_lang['mxapi_badge_internal'] = 'служебный';
+$_lang['mxapi_badge_internal_hint'] = 'Не отдаётся во внешний каталог и OpenAPI.';
+$_lang['mxapi_badge_write'] = 'запись';
+$_lang['mxapi_badge_deprecated'] = 'устарел';
+
+$_lang['mxapi_detail_id'] = 'Идентификатор';
+$_lang['mxapi_detail_url'] = 'Полный адрес';
+$_lang['mxapi_detail_scope'] = 'Scope';
+$_lang['mxapi_detail_permission'] = 'Право MODX';
+$_lang['mxapi_detail_auth'] = 'Аутентификация';
+$_lang['mxapi_detail_context'] = 'Контекст MODX';
+$_lang['mxapi_detail_provider'] = 'Источник';
+$_lang['mxapi_detail_route_template'] = 'Шаблон маршрута';
+$_lang['mxapi_detail_processor'] = 'Процессор';
+$_lang['mxapi_detail_not_required'] = 'не требуется';
+$_lang['mxapi_detail_bearer'] = 'Bearer-токен';
+$_lang['mxapi_context_request'] = 'из запроса (X-MxApi-Context)';
+$_lang['mxapi_context_default'] = 'по умолчанию (mxapi.context)';
+
+$_lang['mxapi_param_none'] = 'Параметров нет.';
+$_lang['mxapi_param_name'] = 'Параметр';
+$_lang['mxapi_param_type'] = 'Тип';
+$_lang['mxapi_param_in'] = 'Где';
+$_lang['mxapi_param_required'] = 'Обязателен';
+$_lang['mxapi_param_description'] = 'Описание';
+$_lang['mxapi_param_default'] = 'по умолчанию';
+$_lang['mxapi_param_enum'] = 'значения:';
+
+$_lang['mxapi_yes'] = 'да';
+$_lang['mxapi_no'] = 'нет';
+$_lang['mxapi_save'] = 'Сохранить';
+$_lang['mxapi_cancel'] = 'Отмена';
+$_lang['mxapi_close'] = 'Закрыть';
+
+$_lang['mxapi_client_empty'] = 'Клиентов интеграции пока нет.';
+$_lang['mxapi_client_status'] = 'Состояние';
+$_lang['mxapi_client_active'] = 'включён';
+$_lang['mxapi_client_inactive'] = 'отключён';
+$_lang['mxapi_client_err_load'] = 'Не удалось загрузить список клиентов.';
+$_lang['mxapi_client_tokens_revoked'] = 'Отозвано токенов: [[+count]]';

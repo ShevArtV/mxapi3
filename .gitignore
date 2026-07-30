@@ -15,6 +15,10 @@
 /composer.lock
 /.phpunit.result.cache
 
+# Зависимости сборки фронтенда. ⚠️ js/mgr/vue-dist/ НЕ игнорируется:
+# собранные бандлы едут в transport, на сайте клиента Vite не запускается.
+/assets/components/mxapi/node_modules/
+
 # Проектная конфигурация конкретного сайта — не наша
 /core/config/mxapi.php
 
