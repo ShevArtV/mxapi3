@@ -85,12 +85,12 @@ class Modx3LogRepository implements LogRepositoryInterface
      */
     public function purgeOlderThan($before)
     {
-        $query = $this->modx->newQuery(MxApiLog::class);
-        $query->where(['createdon:<' => (int)$before]);
+        // Условия — массивом, а не объектом запроса: см. Modx3TokenRepository::purgeExpired().
+        $conditions = ['createdon:<' => (int)$before];
 
-        $count = $this->modx->getCount(MxApiLog::class, $query);
+        $count = $this->modx->getCount(MxApiLog::class, $conditions);
         if ($count > 0) {
-            $this->modx->removeCollection(MxApiLog::class, $query);
+            $this->modx->removeCollection(MxApiLog::class, $conditions);
         }
 
         return $count;

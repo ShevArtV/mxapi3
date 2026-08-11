@@ -11,7 +11,7 @@ return [
     'name' => 'mxApi',
     'name_lower' => 'mxapi',
     'name_short' => 'mxapi',
-    'version' => '2.0.0',
+    'version' => '2.0.1',
     'release' => 'beta',
     'php_version' => '8.1',
 
