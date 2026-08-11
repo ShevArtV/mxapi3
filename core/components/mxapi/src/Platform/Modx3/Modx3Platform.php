@@ -91,16 +91,30 @@ class Modx3Platform implements PlatformInterface
      */
     public function log($level, $message, array $context = [])
     {
-        $message = '[mxapi] ' . $message;
-        if (!empty($context)) {
-            $message .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        }
-
         $logger = $this->findLogger();
         if ($logger) {
-            $logger->log($message, $context, $level, 'mxapi');
+            try {
+                // Порядок аргументов mxLogger: тэги, уровень, сообщение, контекст.
+                // Сообщение уходит чистым: тэг и контекст у логгера — отдельные
+                // поля грида, и дублировать их в тексте значит ломать фильтрацию,
+                // ради которой логгер и подключён.
+                $logger->log('mxapi', $level, $message, $context);
 
-            return;
+                return;
+            } catch (\Throwable $exception) {
+                // Ошибка типов — это \Error, а не \Exception, поэтому ловим
+                // \Throwable: сигнатура соседнего пакета не наш контракт, он
+                // может стоять любой версии. Сбой логгера уходит в штатный
+                // журнал MODX и не рушит ответ клиенту.
+                $message .= ' (mxLogger не принял запись: ' . $exception->getMessage() . ')';
+            }
+        }
+
+        // Префикс и контекст строкой — только здесь: у журнала MODX полей для
+        // тэга и структурированного контекста нет.
+        $fallback = '[mxapi] ' . $message;
+        if (!empty($context)) {
+            $fallback .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         $levels = [
@@ -111,7 +125,7 @@ class Modx3Platform implements PlatformInterface
         ];
         $modxLevel = $levels[$level] ?? modX::LOG_LEVEL_ERROR;
 
-        $this->modx->log($modxLevel, $message);
+        $this->modx->log($modxLevel, $fallback);
     }
 
     /**
@@ -502,11 +516,16 @@ class Modx3Platform implements PlatformInterface
             return $this->modx->mxl;
         }
 
-        if (isset($this->modx->services) && $this->modx->services->has('mxlogger')) {
-            $logger = $this->modx->services->get('mxlogger');
-            if (is_object($logger) && method_exists($logger, 'log')) {
-                return $logger;
+        try {
+            if (isset($this->modx->services) && $this->modx->services->has('mxlogger')) {
+                $logger = $this->modx->services->get('mxlogger');
+                if (is_object($logger) && method_exists($logger, 'log')) {
+                    return $logger;
+                }
             }
+        } catch (\Throwable $exception) {
+            // Контейнер собирает сервис лениво: сбой чужого конструктора — не
+            // повод ронять запрос, логи в этом случае уйдут в журнал MODX.
         }
 
         return null;
